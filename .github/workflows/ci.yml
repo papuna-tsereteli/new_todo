@@ -45,9 +45,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install psycopg2-binary
         
-        # FIX: Use Python to robustly filter out Windows-specific dependencies.
-        # This handles file encoding issues that sed/grep could not.
-        python -c "with open('back/requirements.txt', 'r', encoding='utf-8-sig') as r, open('back/requirements.clean.txt', 'w') as w: [w.write(line) for line in r if 'pywin32' not in line]"
+        # FIX: Use Python with the correct 'utf-16' encoding to read the requirements file.
+        python -c "with open('back/requirements.txt', 'r', encoding='utf-16') as r, open('back/requirements.clean.txt', 'w') as w: [w.write(line) for line in r if 'pywin32' not in line]"
         
         # Install from the newly created clean requirements file
         pip install -r back/requirements.clean.txt
