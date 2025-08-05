@@ -44,11 +44,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install psycopg2-binary
-        
-        # FIX: Use grep to robustly remove the Windows-specific dependency.
-        # This creates a new file without the pywin32 line, then replaces the old one.
         grep -v "pywin32" back/requirements.txt > back/requirements.txt.tmp && mv back/requirements.txt.tmp back/requirements.txt
-        
         pip install -r back/requirements.txt
 
     - name: Run Pytest
@@ -57,4 +53,4 @@ jobs:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       run: |
         cd back
-        pytest
+        python -m pytest
