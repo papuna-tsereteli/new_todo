@@ -53,7 +53,6 @@ def test_create_todo(client):
     assert data["completed"] is False
     assert "id" in data
 
-
 def test_read_todos(client):
     """
     Test reading all to-do items.
@@ -67,7 +66,6 @@ def test_read_todos(client):
     assert isinstance(data, list)
     assert len(data) > 0
     assert data[-1]["text"] == "Another Test Todo"
-
 
 def test_update_todo(client):
     """
@@ -83,7 +81,6 @@ def test_update_todo(client):
     data = update_response.json()
     assert data["text"] == "Updated Text"
     assert data["completed"] is True
-
 
 def test_delete_todo(client):
     """
