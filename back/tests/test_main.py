@@ -42,9 +42,9 @@ client = TestClient(app)
 
 # --- Standard CRUD Tests ---
 
-def test_create_todo():
+def test_create_todo(client):
     """
-    Tests creating a new to-do item via the POST /todos/ endpoint.
+    Test creating a new to-do item.
     """
     response = client.post("/todos/", json={"text": "Test Todo", "completed": False})
     assert response.status_code == 200
@@ -54,12 +54,13 @@ def test_create_todo():
     assert "id" in data
 
 
-def test_read_todos():
+def test_read_todos(client):
     """
-    Tests fetching all to-do items from the GET /todos/ endpoint.
+    Test reading all to-do items.
     """
-    # Create an item first to ensure the database isn't empty
-    client.post("/todos/", json={"text": "Another Test Todo"})
+    # First, create an item to ensure the list is not empty
+    client.post("/todos/", json={"text": "Another Test Todo", "completed": False})
+
     response = client.get("/todos/")
     assert response.status_code == 200
     data = response.json()
@@ -68,42 +69,37 @@ def test_read_todos():
     assert data[-1]["text"] == "Another Test Todo"
 
 
-def test_update_todo():
+def test_update_todo(client):
     """
-    Tests updating an existing to-do item via the PUT /todos/{todo_id} endpoint.
+    Test updating an existing to-do item.
     """
-    # 1. Create a todo
-    response_create = client.post("/todos/", json={"text": "Todo to update"})
-    assert response_create.status_code == 200
-    todo_id = response_create.json()["id"]
+    # Create an item to update
+    create_response = client.post("/todos/", json={"text": "Todo to update", "completed": False})
+    todo_id = create_response.json()["id"]
 
-    # 2. Update the todo
-    response_update = client.put(
-        f"/todos/{todo_id}",
-        json={"text": "Updated Text", "completed": True}
-    )
-    assert response_update.status_code == 200
-    data = response_update.json()
+    # Now update it
+    update_response = client.put(f"/todos/{todo_id}", json={"text": "Updated Text", "completed": True})
+    assert update_response.status_code == 200
+    data = update_response.json()
     assert data["text"] == "Updated Text"
     assert data["completed"] is True
 
 
-def test_delete_todo():
+def test_delete_todo(client):
     """
-    Tests deleting a to-do item and ensuring it's gone.
+    Test deleting a to-do item.
     """
-    # 1. Create a todo
-    response_create = client.post("/todos/", json={"text": "Todo to delete"})
-    assert response_create.status_code == 200
-    todo_id = response_create.json()["id"]
+    # Create an item to delete
+    create_response = client.post("/todos/", json={"text": "Todo to delete", "completed": False})
+    todo_id = create_response.json()["id"]
 
-    # 2. Delete the todo
-    response_delete = client.delete(f"/todos/{todo_id}")
-    assert response_delete.status_code == 200
+    # Delete it
+    delete_response = client.delete(f"/todos/{todo_id}")
+    assert delete_response.status_code == 200
 
-    # 3. Verify it's gone (should return a 404 Not Found)
-    response_get = client.get(f"/todos/{todo_id}")
-    assert response_get.status_code == 404
+    # Verify it's gone
+    read_response = client.get(f"/todos/{todo_id}")
+    assert read_response.status_code == 404 # Not Found
 
 
 # --- Mocked AI Suggestion Test ---
