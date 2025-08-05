@@ -48,8 +48,8 @@ jobs:
         python -m pip install --upgrade pip
         # Add psycopg2-binary here to ensure the postgres driver is installed
         pip install psycopg2-binary
-        # FIX: Remove Windows-specific dependencies before installing
-        # This command finds the line with 'pywin32' and deletes it.
+        # FIX: This line finds and deletes the line containing 'pywin32'
+        # from the requirements file before installation.
         sed -i '/pywin32/d' back/requirements.txt
         pip install -r back/requirements.txt
 
