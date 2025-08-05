@@ -33,12 +33,12 @@ class VectorDB:
             print(f"Collection '{COLLECTION_NAME}' already exists.")
         except Exception:
             print(f"Collection '{COLLECTION_NAME}' not found. Creating new collection.")
-            # If it doesn't exist, create it
-            self.client.recreate_collection(
+            # If it doesn't exist, create it (changed from recreate_collection)
+            self.client.create_collection(
                 collection_name=COLLECTION_NAME,
                 vectors_config=models.VectorParams(
                     size=embedding_size,
-                    distance=models.Distance.COSINE  # Cosine similarity is good for text
+                    distance=models.Distance.COSINE
                 ),
             )
             print(f"Collection '{COLLECTION_NAME}' created successfully.")

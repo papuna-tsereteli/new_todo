@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+# back/schemas.py
+
+from pydantic import BaseModel, ConfigDict # Import ConfigDict
 from typing import Optional, List
 
 # --- Todo Schemas ---
@@ -16,8 +18,7 @@ class TodoUpdate(BaseModel):
 
 class Todo(TodoBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True) # Use model_config instead of class Config
 
 # --- AI Suggestion Schemas ---
 
