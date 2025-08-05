@@ -1,15 +1,20 @@
 import numpy as np
-import os # Add this import
+import os
+from unittest.mock import MagicMock
 
 from qdrant_client import QdrantClient, models
 from sentence_transformers import SentenceTransformer
-from dotenv import load_dotenv # Add this import
-load_dotenv() # Add this line
+from dotenv import load_dotenv
+
+load_dotenv()
 
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
-QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333)) # Use int to cast the port
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
 COLLECTION_NAME = "todos"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+# Check if we're in testing mode
+TESTING = os.getenv("TESTING", "false").lower() == "true"
 
 
 class VectorDB:
@@ -18,6 +23,15 @@ class VectorDB:
         Initializes the Qdrant client, the embedding model, and ensures the
         collection exists in Qdrant.
         """
+        if TESTING:
+            # Create mock implementations for testing
+            self.client = MagicMock()
+            self.embedding_model = MagicMock()
+            self.embedding_model.get_sentence_embedding_dimension.return_value = 384
+            self.client.get_collection.side_effect = Exception("Collection not found")
+            print(f"VectorDB initialized in testing mode")
+            return
+
         # Initialize the Qdrant client
         self.client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
@@ -45,13 +59,34 @@ class VectorDB:
 
     def _get_embedding(self, text: str) -> np.ndarray:
         """Helper function to create an embedding for a given text."""
+        if TESTING:
+            # Return a mock embedding for testing
+            return np.random.rand(384)
         return self.embedding_model.encode(text, convert_to_tensor=False)
+
+    def count_todos(self) -> models.CountResult:
+        """
+        Counts the total number of vectors in the collection.
+        """
+        if TESTING:
+            mock_result = MagicMock()
+            mock_result.count = 0
+            return mock_result
+
+        return self.client.count(
+            collection_name=COLLECTION_NAME,
+            exact=True
+        )
 
     def upsert_todo(self, todo_id: int, todo_text: str):
         """
         Creates an embedding for a to-do item and upserts (updates or inserts)
         it into the Qdrant collection.
         """
+        if TESTING:
+            print(f"Mock: Upserted vector for To-Do ID: {todo_id}")
+            return
+
         vector = self._get_embedding(todo_text)
 
         # Upsert the point into the collection
@@ -73,6 +108,10 @@ class VectorDB:
         """
         Searches for to-do items that are semantically similar to the query.
         """
+        if TESTING:
+            # Return empty list for testing
+            return []
+
         query_vector = self._get_embedding(query)
 
         search_result = self.client.search(
@@ -88,6 +127,10 @@ class VectorDB:
         """
         Deletes a vector from the Qdrant collection by its ID.
         """
+        if TESTING:
+            print(f"Mock: Deleted vector for To-Do ID: {todo_id}")
+            return
+
         self.client.delete(
             collection_name=COLLECTION_NAME,
             points_selector=models.PointIdsList(points=[todo_id]),

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends
+from contextlib import asynccontextmanager
+
 from sqlalchemy.orm import Session
 from typing import List
 import models
@@ -6,6 +7,8 @@ import schemas
 from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
 from ai_suggester import get_suggestions_graph
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from reindex import reindex_all_todos
 
 # <<< 1. Import the new vector DB client
 from vector_db import vector_db_client
@@ -13,7 +16,23 @@ from vector_db import vector_db_client
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Code to run on startup
+    print("--- Application starting up... ---")
+    # Use BackgroundTasks to run the check without blocking startup
+    background_tasks = BackgroundTasks()
+    background_tasks.add_task(reindex_all_todos)
+    # The 'await' here is for the add_task, not the task itself.
+    # The task will run in the background.
+    await background_tasks()
+
+    yield
+
+    # Code to run on shutdown
+    print("--- Application shutting down... ---")
+
+app = FastAPI(lifespan=lifespan)
 
 # Your origins list should be the one that works for you
 origins = [
